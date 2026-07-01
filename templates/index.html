@@ -34,7 +34,7 @@
                     {% for movie in movies %}
                         <article class="movie-card">
                             {% if movie.Poster and movie.Poster != "N/A" %}
-                                <img src="{{ movie.poster }}" alt="{{ movie.title }}">
+                                <img src="{{ movie.Poster }}" alt="{{ movie.Title }}">
                             {% else %}
                                 <div class="poster-none">No Poster</div>
                             {% endif %}
@@ -44,10 +44,10 @@
                                 <p>{{ movie.Year }}</p>
 
                                 <form action="/favorites" method="post" class="favorite-form">
-                                    <input type="hidden" name="imdb_id" value="{{ movie.imdb_id }}">
-                                    <input type="hidden" name="title" value="{{ movie.title }}">
-                                    <input type="hidden" name="year" value="{{ movie.year }}">
-                                    <input type="hidden" name="poster" value="{{ movie.poster }}">
+                                    <input type="hidden" name="imdb_id" value="{{ movie.imdbID }}">
+                                    <input type="hidden" name="title" value="{{ movie.Title }}">
+                                    <input type="hidden" name="year" value="{{ movie.Year }}">
+                                    <input type="hidden" name="poster" value="{{ movie.Poster }}">
 
                                     <label>
                                         Rating
@@ -87,7 +87,7 @@
                                 <p>{{ movie.year }}</p>
                                 <p>Rating: {{ movie.rating or "Not rated" }}</p>
 
-                                <form action="/favorites/{{ movie.imdbID }}/delete" method="post">
+                                <form action="/favorites/{{ movie.imdb_id }}/delete" method="post">
                                     <button type="submit" class="remove">Delete</button>
                                 </form>
                             </div>
