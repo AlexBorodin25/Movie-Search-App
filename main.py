@@ -8,21 +8,20 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import  Jinja2Templates
 
-OMDB_API_KEY = os.getenv("OMDB_API_KEY")
 OMDB_URL = "https://www.omdbapi.com/"
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_NAME = os.path.join(BASE_DIR, "movies.db")
-app = FastAPI(title="Movie Search App")
+BASE_DIR = Path(__file__).resolve().parent
+DB_NAME = BASE_DIR / "movies.db"
+app = FastAPI(title="Movie Search App", debug=True)
 
 app.mount(
     "/static",
-    StaticFiles(directory=os.path.join(BASE_DIR, "static")),
+    StaticFiles(directory=BASE_DIR / "static"),
     name="static"
 )
 
 templates = Jinja2Templates(
-    directory=os.path.join(BASE_DIR, "templates")
-)
+    directory=BASE_DIR / "templates")
+
 
 def get_db():
     conn = sqlite3.connect(DB_NAME)
@@ -58,6 +57,8 @@ def home(request: Request):
 
 @app.get("/search")
 def search(request: Request, title: str):
+    OMDB_API_KEY = os.getenv("OMDB_API_KEY")
+
     if not OMDB_API_KEY:
         raise HTTPException(
             status_code=500,
@@ -129,3 +130,7 @@ def get_favorites():
         return conn.execute(
             "SELECT * FROM favorites ORDER BY title"
         ).fetchall()
+
+    @app.get("/health")
+    def health():
+        return {"status": "ok"}
