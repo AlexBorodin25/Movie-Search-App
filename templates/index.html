@@ -25,6 +25,49 @@
                 <p class="error">{{ error }}</p>
             {% endif %}
         </section>
+
+        {% if movies %}
+            <section>
+                <h2>Search Results</h2>
+
+                <div class="results">
+                    {% for movie in movies %}
+                        <article class="movie-card">
+                            {% if movie.Poster and movie.Poster != "N/A" %}
+                                <img src="{{ movie.Poster }}" alt="{{ movie.Title }}">
+                            {% else %}
+                                <div class="poster-none">No Poster</div>
+                            {% endif %}
+
+                            <div class="movie-info">
+                                <h3>{{ movie.Title }}</h3>
+                                <p>{{ movie.Year }}</p>
+
+                                <form action="/favorite" method="post" class="favorite-form">
+                                    <input type="hidden" name="imdb_id" value="{{ movie.imdbID }}">
+                                    <input type="hidden" name="title" value="{{ movie.Title }}">
+                                    <input type="hidden" name="year" value="{{ movie.Year }}">
+                                    <input type="hidden" name="poster" value="{{ movie.Poster }}">
+
+                                    <label>
+                                        Rating
+                                        <select name="rating">
+                                            <option value="1">1 star</option>
+                                            <option value="2">2 stars</option>
+                                            <option value="3">3 stars</option>
+                                            <option value="4">4 stars</option>
+                                            <option value="5">5 stars</option>
+                                        </select>
+                                    </label>
+
+                                    <button type="submit">Save to Favorites</button>
+                                </form>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
     </main>
 </body>
 </html>
