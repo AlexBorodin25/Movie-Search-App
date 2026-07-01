@@ -68,6 +68,36 @@
                 </div>
             </section>
         {% endif %}
+
+        <section>
+            <h2>Favorites</h2>
+
+            {% if favorites %}
+                <div class="results">
+                    {% for movie in favorites %}
+                        <article class="movie-card">
+                            {% if movie.Poster and movie.Poster != "N/A" %}
+                                <img src="{{ movie.Poster }}" alt="{{ movie.Title }}">
+                            {% else %}
+                                <div class="poster-none">No Poster</div>
+                            {% endif %}
+
+                            <div class="movie-info">
+                                <h3>{{ movie.Title }}</h3>
+                                <p>{{ movie.Year }}</p>
+                                <p>Rating: {{ movie.rating or "Not rated" }}</p>
+
+                                <form action="/favorite/{{ movie.imdbID }}/delete" method="post">
+                                    <button type="submit" class="remove">Delete</button>
+                                </form>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p> No favorites yet.</p>
+            {% endif %}
+        </section>
     </main>
 </body>
 </html>
