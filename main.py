@@ -1,5 +1,6 @@
 import sqlite3
 import os
+from pathlib import Path
 from typing import Optional
 
 import requests
@@ -11,7 +12,7 @@ from fastapi.templating import  Jinja2Templates
 OMDB_URL = "https://www.omdbapi.com/"
 BASE_DIR = Path(__file__).resolve().parent
 DB_NAME = BASE_DIR / "movies.db"
-app = FastAPI(title="Movie Search App", debug=True)
+app = FastAPI(title="Movie Search App")
 
 app.mount(
     "/static",
@@ -47,12 +48,13 @@ init_db()
 def home(request: Request):
     return templates.TemplateResponse(
         "index.html",
-        {"request": request,
-        "movies": None,
-        "favorites": get_favorites(),
-        "error": None,
-        "search_title": "",
-         },
+        {
+            "request": request,
+            "movies": None,
+            "favorites": [],
+            "error": None,
+            "search_title": "",
+        },
     )
 
 @app.get("/search")
@@ -130,7 +132,3 @@ def get_favorites():
         return conn.execute(
             "SELECT * FROM favorites ORDER BY title"
         ).fetchall()
-
-    @app.get("/health")
-    def health():
-        return {"status": "ok"}
