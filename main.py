@@ -7,7 +7,6 @@ from fastapi import FastAPI, Form, Request, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import  Jinja2Templates
-from panel.compiler import BASE_DIR
 
 OMDB_API_KEY = os.getenv("OMDB_API_KEY")
 OMDB_URL = "https://www.omdbapi.com/"
