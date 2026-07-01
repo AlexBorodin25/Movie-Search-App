@@ -106,3 +106,19 @@ def add_fav(
         )
 
     return RedirectResponse("/", status_code=303)
+
+@app.post("/favorites/{imdb_id}/delete")
+def delete_fav(imdb_id: str):
+    with get_db() as conn:
+        conn.execute(
+            "DELETE FROM favorites WHERE imdb_id = ?",
+            (imdb_id,),
+        )
+
+    return RedirectResponse("/", status_code=303)
+
+def get_favorites():
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM favorites ORDER BY title"
+        ).fetchall()
