@@ -7,7 +7,7 @@ import requests
 from fastapi import FastAPI, Form, Request, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import  Jinja2Templates
+from fastapi.templating import Jinja2Templates
 
 OMDB_URL = "https://www.omdbapi.com/"
 BASE_DIR = Path(__file__).resolve().parent
@@ -42,8 +42,15 @@ def init_db():
             '''
         )
 
-init_db()
+def get_favorites():
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM favorites ORDER BY title"
+        ).fetchall()
 
+@app.on_event("startup")
+def startup():
+    init_db()
 @app.get("/")
 def home(request: Request):
     return templates.TemplateResponse(
@@ -51,7 +58,7 @@ def home(request: Request):
         {
             "request": request,
             "movies": None,
-            "favorites": [],
+            "favorites": get_favorites(),
             "error": None,
             "search_title": "",
         },
@@ -127,8 +134,3 @@ def delete_fav(imdb_id: str):
 
     return RedirectResponse("/", status_code=303)
 
-def get_favorites():
-    with get_db() as conn:
-        return conn.execute(
-            "SELECT * FROM favorites ORDER BY title"
-        ).fetchall()
