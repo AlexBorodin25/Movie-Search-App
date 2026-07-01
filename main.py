@@ -3,7 +3,7 @@ import os
 from typing import Optional
 
 import requests
-from fastapi import FastAPI, Form, Request,
+from fastapi import FastAPI, Form, Request, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import  Jinja2Templates
@@ -41,7 +41,7 @@ init_db()
 def home(request: Request):
     return templates.TemplateResponse(
         "index.html",
-        {"request": request
+        {"request": request,
         "movies": None,
         "favorites": get_favorites(),
         "error": None,
@@ -60,7 +60,7 @@ def search(request: Request, title: str):
     response = requests.get(
         OMDB_URL,
         params={
-            "apiKey": OMDB_API_KEY,
+            "apikey": OMDB_API_KEY,
             "s": title,
             "type": "movie",
         },
