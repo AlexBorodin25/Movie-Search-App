@@ -2,9 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Movie Search App</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
 </head>
 <body>
+    <main class="page">
+        <section class="movie-search">
+            <h1>Movie Search</h1>
 
+            <form action="/search" method="get" class="search-form">
+                <input
+                    type="text"
+                    name="title"
+                    placeholder="Search by movie title"
+                    value="{{ search_title }}"
+                    required
+                >
+                <button type="submit">Search</button>
+            </form>
+
+            {% if error %}
+                <p class="error">{{ error }}</p>
+            {% endif %}
+        </section>
+    </main>
 </body>
 </html>
