@@ -10,8 +10,8 @@ from fastapi.templating import  Jinja2Templates
 
 OMDB_API_KEY = os.getenv("OMDB_API_KEY")
 OMDB_URL = "https://www.omdbapi.com/"
-DB_NAME = os.path.join(BASE_DIR, "movies.db")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_NAME = os.path.join(BASE_DIR, "movies.db")
 app = FastAPI(title="Movie Search App")
 
 app.mount(
