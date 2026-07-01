@@ -42,18 +42,20 @@ def init_db():
             '''
         )
 
+init_db()
+
 def get_favorites():
     with get_db() as conn:
         return conn.execute(
             "SELECT * FROM favorites ORDER BY title"
         ).fetchall()
 
-@app.on_event("startup")
-def startup():
-    init_db()
 @app.get("/")
 def home(request: Request):
+    print("HOME ROUTE WORKS")
+
     return templates.TemplateResponse(
+        request,
         "index.html",
         {
             "request": request,
@@ -95,6 +97,7 @@ def search(request: Request, title: str):
         movies = data.get("Search", [])
 
     return templates.TemplateResponse(
+        request,
         "index.html",
             {"request": request,
             "movies": movies,
