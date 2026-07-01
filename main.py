@@ -86,3 +86,23 @@ def search(request: Request, title: str):
             "search_title": title,
         },
     )
+
+@app.post("/favorites")
+def add_fav(
+    imdb_id: str = Form(...),
+    title: str = Form(...),
+    year: Optional[str] = Form(None),
+    poster: Optional[str] = Form(None),
+    rating: Optional[int] = Form(None),
+):
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT OR REPLACE INTO favorites 
+            (imdb_id, title, year, poster, rating)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (imdb_id, title, year, poster, rating),
+        )
+
+    return RedirectResponse("/", status_code=303)
