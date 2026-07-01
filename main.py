@@ -48,3 +48,41 @@ def home(request: Request):
         "search_title": "",
          },
     )
+
+@app.get("/search")
+def search(request: Request, title: str):
+    if not OMDB_API_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="OMDB_API_KEY not set.",
+        )
+
+    response = requests.get(
+        OMDB_URL,
+        params={
+            "apiKey": OMDB_API_KEY,
+            "s": title,
+            "type": "movie",
+        },
+        timeout=10,
+    )
+
+    data = response.json()
+
+    movies = []
+    error = None
+
+    if data.get("Response") == "False":
+        error = data.get("Error", "No movies found.")
+    else:
+        movies = data.get("Search", [])
+
+    return templates.TemplateResponse(
+        "index.html",
+            {"request": request,
+            "movies": movies,
+            "favorites": get_favorites(),
+            "error": error,
+            "search_title": title,
+        },
+    )
