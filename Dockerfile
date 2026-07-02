@@ -1,8 +1,3 @@
-FROM ubuntu:latest
-LABEL authors="alexb"
-
-ENTRYPOINT ["top", "-b"]
-
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
