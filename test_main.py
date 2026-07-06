@@ -149,3 +149,26 @@ def test_init_db_creates_fav_table(test_db):
 
     assert result is not None
     assert result["name"] == "favorites"
+
+def test_favorites_list_empty(test_db):
+    favorites = app_module.get_favorites()
+
+    assert favorites == []
+
+def test_favorites_list(test_db):
+    with app_module.get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO favorites 
+            (imdb_id, title, year, poster, rating)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            ("tt1375666", "Inception", "2010", "poster.jpg", 5),
+        )
+
+    favorites = app_module.get_favorites()
+
+    assert len(favorites) == 1
+    assert favorites[0]["imdb_id"] == "tt1375666"
+    assert favorites[0]["title"] == "Inception"
+    assert favorites[0]["rating"] == 5
