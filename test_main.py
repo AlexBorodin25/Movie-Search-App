@@ -73,3 +73,23 @@ def test_search(client, monkeypatch):
     assert "Inception" in response.text
     assert "2010" in response.text
     assert "Save to Favorites" in response.text
+
+def test_search_no_results(client, monkeypatch):
+    class FakeResponse:
+        def json(self):
+            return {
+                "Response": "False",
+                "Error": "Movie not found!",
+            }
+
+    monkeypatch.setenv("OMDB_API_KEY", "fake_key")
+    monkeypatch.setattr(
+        app_module.requests,
+        "get",
+        lambda *args, **kwargs: FakeResponse(),
+    )
+
+    response = client.get("/search", params={"title": "WrongTitle"})
+
+    assert response.status_code == 200
+    assert "Movie not found!" in response.text
