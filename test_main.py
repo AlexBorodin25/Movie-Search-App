@@ -139,3 +139,13 @@ def test_delete_fav(client):
     favorites = app_module.get_favorites()
 
     assert len(favorites) == 0
+
+def test_init_db_creates_fav_table(test_db):
+    with app_module.get_db() as conn:
+        result = conn.execute(
+            "SELECT name FROM sqlite_master "
+            "WHERE type='table' AND name='favorites'"
+        ).fetchone()
+
+    assert result is not None
+    assert result["name"] == "favorites"
