@@ -34,3 +34,42 @@ def test_home_page(client):
     assert "Search by movie title" in response.text
     assert "Favorites" in response.text
     assert "No favorites yet." in response.text
+
+def test_search_without_APIkey(client, monkeypatch):
+    monkeypatch.delenv("OMDB_API_KEY", raising=False)
+
+    response = client.get("/search", params={"title": "Inception"})
+
+    assert response.status_code == 500
+    assert response.json()["detail"] == "OMDB_API_KEY not set."
+
+def test_search(client, monkeypatch):
+    class FakeResponse:
+        def json(self):
+            return {
+                "Response": "True",
+                "Search": [
+                    {
+                        "Title": "Inception",
+                        "Year": "2010",
+                        "imbdID": "tt1375666",
+                        "Poster": "poster.jpg",
+                    }
+                ],
+            }
+    def fake_get(url, params, timeout):
+        assert url == app_module.OMDB_URL
+        assert params["apikey"] == "fake_key"
+        assert params["s"] == "Inception"
+        assert timeout == 10
+        return FakeResponse()
+
+    monkeypatch.setenv("OMDB_API_KEY", "fake_key")
+    monkeypatch.setattr(app_module.requests, "get", fake_get)
+
+    response = client.get("/search", params={"title": "Inception"})
+
+    assert response.status_code == 200
+    assert "Inception" in response.text
+    assert "2010" in response.text
+    assert "Save to Favorites" in response.text
