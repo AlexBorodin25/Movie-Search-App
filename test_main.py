@@ -18,3 +18,15 @@ def test_db(tmp_path, monkeypatch):
 @pytest.fixture
 def client(test_db):
     return TestClient(app_module.app)
+
+def test_get_db_connection(test_db):
+    conn = app_module.get_db()
+
+    assert isinstance(conn, sqlite3.Connection)
+    assert conn.row_factory == sqlite3.Row
+
+    conn.close()
+
+def test_favorites_table(test_db):
+    conn = app_module.get_db()
+
