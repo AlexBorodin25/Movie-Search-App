@@ -93,3 +93,25 @@ def test_search_no_results(client, monkeypatch):
 
     assert response.status_code == 200
     assert "Movie not found!" in response.text
+
+def test_add_fav(client):
+    response = client.post(
+        "/favorites",
+        data={
+            "imdb_id": "tt1375666",
+            "title": "Inception",
+            "year": "2010",
+            "poster": "poster.jpg",
+            "rating": 5,
+        },
+    follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/"
+
+    favorites = app_module.get_favorites()
+
+    assert len(favorites) == 1
+    assert favorites[0]["title"] == "Inception"
+    assert favorites[0]["rating"] == 5
