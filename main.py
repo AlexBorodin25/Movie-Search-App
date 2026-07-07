@@ -1,5 +1,6 @@
 import sqlite3
 import os
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Optional
 
@@ -23,7 +24,7 @@ app.mount(
 templates = Jinja2Templates(
     directory=BASE_DIR / "templates")
 
-
+@contextmanager
 def get_db():
     conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
@@ -45,6 +46,7 @@ def init_db():
                 rating INTEGER CHECK (rating BETWEEN 1 AND 5))
             '''
         )
+        conn.commit()
 
 init_db()
 
@@ -80,17 +82,42 @@ def search(request: Request, title: str):
             detail="OMDB_API_KEY not set.",
         )
 
-    response = requests.get(
-        OMDB_URL,
-        params={
-            "apikey": OMDB_API_KEY,
-            "s": title,
-            "type": "movie",
-        },
-        timeout=10,
-    )
-
-    data = response.json()
+    try:
+        response = requests.get(
+            OMDB_URL,
+            params={
+                "apikey": OMDB_API_KEY,
+                "s": title,
+                "type": "movie",
+            },
+            timeout=10,
+        )
+        response.raise_for_status()
+        data = response.json()
+    except requests.RequestException:
+        return templates.TemplateResponse(
+            request,
+            "index.html",
+            {
+                "request": request,
+                "movies": [],
+                "favorites": get_favorites(),
+                "error": "Could not reach the movie service.",
+                "search_title": title,
+             },
+        )
+    except ValueError:
+        return templates.TemplateResponse(
+            request,
+            "index.html",
+            {
+                "request": request,
+                "movies": [],
+                "favorites": get_favorites(),
+                "error": "Could not reach the movie service.",
+                "search_title": title,
+            },
+        )
 
     movies = []
     error = None
@@ -128,6 +155,7 @@ def add_fav(
             """,
             (imdb_id, title, year, poster, rating),
         )
+        conn.commit()
 
     return RedirectResponse("/", status_code=303)
 
@@ -138,6 +166,7 @@ def delete_fav(imdb_id: str):
             "DELETE FROM favorites WHERE imdb_id = ?",
             (imdb_id,),
         )
+        conn.commit()
 
     return RedirectResponse("/", status_code=303)
 
