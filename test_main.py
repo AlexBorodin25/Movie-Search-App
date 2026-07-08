@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 import main as app_module
 
+
 @pytest.fixture
 def test_db(tmp_path, monkeypatch):
     test_db_path = tmp_path / "test_movies.db"
@@ -14,17 +15,17 @@ def test_db(tmp_path, monkeypatch):
 
     return test_db_path
 
+
 @pytest.fixture
 def client(test_db):
     return TestClient(app_module.app)
 
+
 def test_get_db_connection(test_db):
-    conn = app_module.get_db()
+    with app_module.get_db() as conn:
+        assert isinstance(conn, sqlite3.Connection)
+        assert conn.row_factory == sqlite3.Row
 
-    assert isinstance(conn, sqlite3.Connection)
-    assert conn.row_factory == sqlite3.Row
-
-    conn.close()
 
 def test_home_page(client):
     response = client.get("/")
@@ -35,6 +36,7 @@ def test_home_page(client):
     assert "Favorites" in response.text
     assert "No favorites yet." in response.text
 
+
 def test_search_without_APIkey(client, monkeypatch):
     monkeypatch.delenv("OMDB_API_KEY", raising=False)
 
@@ -42,6 +44,7 @@ def test_search_without_APIkey(client, monkeypatch):
 
     assert response.status_code == 500
     assert response.json()["detail"] == "OMDB_API_KEY not set."
+
 
 def test_search(client, monkeypatch):
     class FakeResponse:
@@ -57,6 +60,7 @@ def test_search(client, monkeypatch):
                     }
                 ],
             }
+
     def fake_get(url, params, timeout):
         assert url == app_module.OMDB_URL
         assert params["apikey"] == "fake_key"
@@ -73,6 +77,7 @@ def test_search(client, monkeypatch):
     assert "Inception" in response.text
     assert "2010" in response.text
     assert "Save to Favorites" in response.text
+
 
 def test_search_no_results(client, monkeypatch):
     class FakeResponse:
@@ -94,6 +99,7 @@ def test_search_no_results(client, monkeypatch):
     assert response.status_code == 200
     assert "Movie not found!" in response.text
 
+
 def test_add_fav(client):
     response = client.post(
         "/favorites",
@@ -104,7 +110,7 @@ def test_add_fav(client):
             "poster": "poster.jpg",
             "rating": 5,
         },
-    follow_redirects=False,
+        follow_redirects=False,
     )
 
     assert response.status_code == 303
@@ -115,6 +121,7 @@ def test_add_fav(client):
     assert len(favorites) == 1
     assert favorites[0]["title"] == "Inception"
     assert favorites[0]["rating"] == 5
+
 
 def test_delete_fav(client):
     client.post(
@@ -140,20 +147,22 @@ def test_delete_fav(client):
 
     assert len(favorites) == 0
 
+
 def test_init_db_creates_fav_table(test_db):
     with app_module.get_db() as conn:
         result = conn.execute(
-            "SELECT name FROM sqlite_master "
-            "WHERE type='table' AND name='favorites'"
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='favorites'"
         ).fetchone()
 
     assert result is not None
     assert result["name"] == "favorites"
 
+
 def test_favorites_list_empty(test_db):
     favorites = app_module.get_favorites()
 
     assert favorites == []
+
 
 def test_favorites_list(test_db):
     with app_module.get_db() as conn:
