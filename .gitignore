@@ -221,3 +221,6 @@ __marimo__/
 # Database files
 *.db
 movies.db
+
+# IDE/editor settings
+.idea/
