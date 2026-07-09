@@ -1,5 +1,6 @@
 import sqlite3
 import os
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Optional
 
@@ -14,41 +15,44 @@ BASE_DIR = Path(__file__).resolve().parent
 DB_NAME = BASE_DIR / "movies.db"
 app = FastAPI(title="Movie Search App")
 
-app.mount(
-    "/static",
-    StaticFiles(directory=BASE_DIR / "static"),
-    name="static"
-)
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
-templates = Jinja2Templates(
-    directory=BASE_DIR / "templates")
+templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
 
+@contextmanager
 def get_db():
     conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
-    return conn
+
+    try:
+        yield conn
+    finally:
+        conn.close()
+
 
 def init_db():
     with get_db() as conn:
         conn.execute(
-            '''CREATE TABLE IF NOT EXISTS favorites (
+            """CREATE TABLE IF NOT EXISTS favorites (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 imdb_id TEXT UNIQUE NOT NULL,
                 title TEXT NOT NULL,
                 year TEXT,
                 poster TEXT,
                 rating INTEGER CHECK (rating BETWEEN 1 AND 5))
-            '''
+            """
         )
+        conn.commit()
+
 
 init_db()
 
+
 def get_favorites():
     with get_db() as conn:
-        return conn.execute(
-            "SELECT * FROM favorites ORDER BY title"
-        ).fetchall()
+        return conn.execute("SELECT * FROM favorites ORDER BY title").fetchall()
+
 
 @app.get("/")
 def home(request: Request):
@@ -66,6 +70,7 @@ def home(request: Request):
         },
     )
 
+
 @app.get("/search")
 def search(request: Request, title: str):
     OMDB_API_KEY = os.getenv("OMDB_API_KEY")
@@ -76,17 +81,42 @@ def search(request: Request, title: str):
             detail="OMDB_API_KEY not set.",
         )
 
-    response = requests.get(
-        OMDB_URL,
-        params={
-            "apikey": OMDB_API_KEY,
-            "s": title,
-            "type": "movie",
-        },
-        timeout=10,
-    )
-
-    data = response.json()
+    try:
+        response = requests.get(
+            OMDB_URL,
+            params={
+                "apikey": OMDB_API_KEY,
+                "s": title,
+                "type": "movie",
+            },
+            timeout=10,
+        )
+        response.raise_for_status()
+        data = response.json()
+    except requests.RequestException:
+        return templates.TemplateResponse(
+            request,
+            "index.html",
+            {
+                "request": request,
+                "movies": [],
+                "favorites": get_favorites(),
+                "error": "Could not reach the movie service.",
+                "search_title": title,
+            },
+        )
+    except ValueError:
+        return templates.TemplateResponse(
+            request,
+            "index.html",
+            {
+                "request": request,
+                "movies": [],
+                "favorites": get_favorites(),
+                "error": "Could not reach the movie service.",
+                "search_title": title,
+            },
+        )
 
     movies = []
     error = None
@@ -99,13 +129,15 @@ def search(request: Request, title: str):
     return templates.TemplateResponse(
         request,
         "index.html",
-            {"request": request,
+        {
+            "request": request,
             "movies": movies,
             "favorites": get_favorites(),
             "error": error,
             "search_title": title,
         },
     )
+
 
 @app.post("/favorites")
 def add_fav(
@@ -124,8 +156,10 @@ def add_fav(
             """,
             (imdb_id, title, year, poster, rating),
         )
+        conn.commit()
 
     return RedirectResponse("/", status_code=303)
+
 
 @app.post("/favorites/{imdb_id}/delete")
 def delete_fav(imdb_id: str):
@@ -134,6 +168,6 @@ def delete_fav(imdb_id: str):
             "DELETE FROM favorites WHERE imdb_id = ?",
             (imdb_id,),
         )
+        conn.commit()
 
     return RedirectResponse("/", status_code=303)
-
